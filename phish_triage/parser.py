@@ -7,48 +7,6 @@ import re
 from html.parser import HTMLParser
 
 
-
-_URL_RE = re.compile(r"(?i)\b(https?://[^\s<>'\"]+|www\.[^\s<>'\"]+)")
-
-class _HrefParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self.hrefs = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag.lower() != "a":
-            return
-        for k, v in attrs:
-            if (k or "").lower() == "href" and v:
-                self.hrefs.append(v)
-
-def _extract_urls_from_text(text: str) -> list[str]:
-    if not text:
-        return []
-    urls = []
-    for m in _URL_RE.finditer(text):
-        u = m.group(1).strip().strip(").,;!\"'<>")
-        if u.lower().startswith("www."):
-            u = "http://" + u
-        urls.append(u)
-    return urls
-
-def _extract_urls_from_html(html: str) -> list[str]:
-    if not html:
-        return []
-    urls = []
-
-    p = _HrefParser()
-    try:
-        p.feed(html)
-        for h in p.hrefs:
-            urls.extend(_extract_urls_from_text(h))
-    except Exception:
-        pass
-
-    urls.extend(_extract_urls_from_text(html))
-    return urls
-
 def _get_header(msg: Message, name: str) -> str:
     v = msg.get(name)
     return str(v).strip() if v else ""
@@ -114,9 +72,58 @@ def _extract_parts(msg: Message) -> Tuple[str, str, List[Dict]]:
         elif ctype == "text/html":
             html_chunks.append(content)
 
-    return ("\n\n".join(t.strip() for t in text_chunks if t and t.strip()),
-            "\n\n".join(h.strip() for h in html_chunks if h and h.strip()),
-            attachments)
+    text_body = "\n\n".join(t.strip() for t in text_chunks if t and t.strip())
+    html_body = "\n\n".join(h.strip() for h in html_chunks if h and h.strip())
+    return text_body, html_body, attachments
+
+
+_URL_RE = re.compile(r"(?i)\b(https?://[^\s<>'\"]+|www\.[^\s<>'\"]+)")
+
+
+class _HrefParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.hrefs: List[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() != "a":
+            return
+        for k, v in attrs:
+            if (k or "").lower() == "href" and v:
+                self.hrefs.append(v)
+
+
+def _clean_url(u: str) -> str:
+    u2 = (u or "").strip().strip(").,;!\"'<>")
+    if u2.lower().startswith("www."):
+        u2 = "http://" + u2
+    return u2
+
+
+def _extract_urls_from_text(text: str) -> List[str]:
+    if not text:
+        return []
+    urls: List[str] = []
+    for m in _URL_RE.finditer(text):
+        urls.append(_clean_url(m.group(1)))
+    return [u for u in urls if u]
+
+
+def _extract_urls_from_html(html: str) -> List[str]:
+    if not html:
+        return []
+    urls: List[str] = []
+
+    p = _HrefParser()
+    try:
+        p.feed(html)
+        for h in p.hrefs:
+            urls.extend(_extract_urls_from_text(h))
+    except Exception:
+        pass
+
+    urls.extend(_extract_urls_from_text(html))
+    return [u for u in urls if u]
 
 
 def parse_eml(eml_path: Path) -> Dict:
@@ -127,6 +134,8 @@ def parse_eml(eml_path: Path) -> Dict:
     msg = BytesParser(policy=policy.default).parsebytes(raw)
 
     body_text, body_html, attachments = _extract_parts(msg)
+
+    urls = sorted(set(_extract_urls_from_text(body_text) + _extract_urls_from_html(body_html)))
 
     return {
         "subject": _get_header(msg, "Subject"),
@@ -143,6 +152,5 @@ def parse_eml(eml_path: Path) -> Dict:
         "body_text": body_text,
         "body_html": body_html,
         "attachments": attachments,
-        "urls": sorted(set(_extract_urls_from_text(body_text) + _extract_urls_from_html(body_html))),
-
+        "urls": urls,
     }

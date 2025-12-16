@@ -1,0 +1,85 @@
+{
+  "eml_path": "samples\\sample.eml",
+  "parsed": {
+    "subject": "Action Required: Verify your account",
+    "date": "Mon, 15 Dec 2025 20:15:00 -0500",
+    "message_id": "<sample-message-id@example.com>",
+    "from_raw": "PayPal Support <support@paypal.com>",
+    "reply_to_raw": "PayPal Support <secure@xn--paypa1-9za.com>",
+    "return_path": "",
+    "to_raw": "user@example.com",
+    "cc_raw": "",
+    "authentication_results": "mx.example.com; spf=fail smtp.mailfrom=paypal.com; dkim=fail header.d=paypal.com; dmarc=fail action=quarantine header.from=paypal.com",
+    "received_spf": "",
+    "headers": {
+      "From": "PayPal Support <support@paypal.com>",
+      "Reply-To": "PayPal Support <secure@xn--paypa1-9za.com>",
+      "To": "user@example.com",
+      "Subject": "Action Required: Verify your account",
+      "Date": "Mon, 15 Dec 2025 20:15:00 -0500",
+      "Message-ID": "<sample-message-id@example.com>",
+      "Authentication-Results": "mx.example.com; spf=fail smtp.mailfrom=paypal.com; dkim=fail header.d=paypal.com; dmarc=fail action=quarantine header.from=paypal.com",
+      "MIME-Version": "1.0",
+      "Content-Type": "text/plain; charset=\"utf-8\""
+    },
+    "body_text": "Your account has been limited. Verify immediately:\r\nhttps://www.xn--paypa1-9za.com/login?session=123",
+    "body_html": "",
+    "attachments": [],
+    "urls": [
+      "https://www.xn--paypa1-9za.com/login?session=123"
+    ]
+  },
+  "indicators": {
+    "from_domain": "paypal.com",
+    "reply_to_domain": "xn--paypa1-9za.com",
+    "from_reply_to_mismatch": true,
+    "auth": {
+      "spf": "fail",
+      "dkim": "fail",
+      "dmarc": "fail",
+      "raw": "mx.example.com; spf=fail smtp.mailfrom=paypal.com; dkim=fail header.d=paypal.com; dmarc=fail action=quarantine header.from=paypal.com"
+    },
+    "url_details": [
+      {
+        "url": "https://www.xn--paypa1-9za.com/login?session=123",
+        "domain": "www.xn--paypa1-9za.com",
+        "domain_display": "www.xn--paypa1-9za.com",
+        "tld": "com",
+        "punycode": true,
+        "risky_tld": false,
+        "domain_age_days": null
+      }
+    ],
+    "attachments": []
+  },
+  "score": {
+    "total": 98,
+    "risk": "High",
+    "breakdown": [
+      {
+        "points": 25,
+        "reason": "From and Reply-To domains do not match."
+      },
+      {
+        "points": 20,
+        "reason": "SPF result is fail."
+      },
+      {
+        "points": 20,
+        "reason": "DKIM result is fail."
+      },
+      {
+        "points": 20,
+        "reason": "DMARC result is fail."
+      },
+      {
+        "points": 5,
+        "reason": "Email contains 1 URL(s)."
+      },
+      {
+        "points": 8,
+        "reason": "1 URL domain(s) appear punycode-encoded (possible lookalike)."
+      }
+    ]
+  }
+}

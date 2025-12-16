@@ -1,0 +1,12 @@
+From: "PayPal Support" <support@paypal.com>
+Reply-To: "PayPal Support" <secure@xn--paypa1-9za.com>
+To: user@example.com
+Subject: Action Required: Verify your account
+Date: Mon, 15 Dec 2025 20:15:00 -0500
+Message-ID: <sample-message-id@example.com>
+Authentication-Results: mx.example.com; spf=fail smtp.mailfrom=paypal.com; dkim=fail header.d=paypal.com; dmarc=fail action=quarantine header.from=paypal.com
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Your account has been limited. Verify immediately:
+https://www.xn--paypa1-9za.com/login?session=123

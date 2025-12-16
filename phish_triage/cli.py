@@ -7,3 +7,8 @@ def main() -> int:
 
     print(f"Loaded: {args.eml}")
     return 0
+
+    urls = parsed.get("urls", [])
+    print("URLs:", len(urls))
+    for u in urls[:5]:
+        print(" -", u)

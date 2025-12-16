@@ -3,7 +3,51 @@ from email.parser import BytesParser
 from email.message import Message
 from pathlib import Path
 from typing import Dict, List, Tuple
+import re
+from html.parser import HTMLParser
 
+
+
+_URL_RE = re.compile(r"(?i)\b(https?://[^\s<>'\"]+|www\.[^\s<>'\"]+)")
+
+class _HrefParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.hrefs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() != "a":
+            return
+        for k, v in attrs:
+            if (k or "").lower() == "href" and v:
+                self.hrefs.append(v)
+
+def _extract_urls_from_text(text: str) -> list[str]:
+    if not text:
+        return []
+    urls = []
+    for m in _URL_RE.finditer(text):
+        u = m.group(1).strip().strip(").,;!\"'<>")
+        if u.lower().startswith("www."):
+            u = "http://" + u
+        urls.append(u)
+    return urls
+
+def _extract_urls_from_html(html: str) -> list[str]:
+    if not html:
+        return []
+    urls = []
+
+    p = _HrefParser()
+    try:
+        p.feed(html)
+        for h in p.hrefs:
+            urls.extend(_extract_urls_from_text(h))
+    except Exception:
+        pass
+
+    urls.extend(_extract_urls_from_text(html))
+    return urls
 
 def _get_header(msg: Message, name: str) -> str:
     v = msg.get(name)
@@ -99,5 +143,6 @@ def parse_eml(eml_path: Path) -> Dict:
         "body_text": body_text,
         "body_html": body_html,
         "attachments": attachments,
-        "urls": [],  # we will populate in the next step
+        "urls": sorted(set(_extract_urls_from_text(body_text) + _extract_urls_from_html(body_html))),
+
     }
